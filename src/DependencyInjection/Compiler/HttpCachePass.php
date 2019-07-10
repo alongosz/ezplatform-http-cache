@@ -8,13 +8,9 @@
  */
 namespace EzSystems\PlatformHttpCacheBundle\DependencyInjection\Compiler;
 
-use EzSystems\PlatformHttpCacheBundle\ProxyClient\HttpDispatcherFactory;
-use FOS\HttpCache\ProxyClient\HttpDispatcher;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use InvalidArgumentException;
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * HttpCache related compiler pass.
@@ -33,27 +29,20 @@ class HttpCachePass implements CompilerPassInterface
         if (!$container->hasDefinition('fos_http_cache.proxy_client.varnish')) {
             throw new InvalidArgumentException('Varnish proxy client must be enabled in FOSHttpCacheBundle');
         }
-        // Override FOS default httpDispatcher with \EzSystems\PlatformHttpCacheBundle\ProxyClient\HttpDispatcherFactory.
-        $container->removeDefinition('fos_http_cache.proxy_client.varnish.http_dispatcher');
 
         $fosConfig = array_merge(...$container->getExtensionConfig('fos_http_cache'));
 
         $servers = $fosConfig['proxy_client']['varnish']['http']['servers'] ?? [];
         $baseUrl = $fosConfig['proxy_client']['varnish']['http']['base_url'] ?? '';
 
-        $definition = new Definition(HttpDispatcher::class);
-        $definition->setFactory([
-            new Reference(HttpDispatcherFactory::class),
-            'buildHttpDispatcher',
-        ]);
-        $definition->setLazy(true);
-        $definition->setArguments([
-            $servers,
-            $baseUrl,
-        ]);
-        $container->setDefinition(
-            'fos_http_cache.proxy_client.varnish.http_dispatcher',
-            $definition
+        $container->setParameter(
+            'ezplatform.http_cache.varnish.http.servers',
+            $servers
+        );
+
+        $container->setParameter(
+            'ezplatform.http_cache.varnish.http.base_url',
+            $baseUrl
         );
     }
 }

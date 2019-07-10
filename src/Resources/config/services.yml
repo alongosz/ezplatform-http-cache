@@ -2,6 +2,9 @@ parameters:
     ezplatform.http_cache.controller.invalidatetoken.class: EzSystems\PlatformHttpCacheBundle\Controller\InvalidateTokenController
     ezplatform.http_cache.listener.vary_header.class: EzSystems\PlatformHttpCacheBundle\EventListener\ConditionallyRemoveVaryHeaderListener
     ezplatform.http_cache.proxy_client.http_dispatcher.class: FOS\HttpCache\ProxyClient\HttpDispatcher
+    # see compiler pass for proper values
+    ezplatform.http_cache.varnish.http.servers: []
+    ezplatform.http_cache.varnish.http.base_url: ~
 
 services:
     EzSystems\PlatformHttpCacheBundle\ProxyClient\HttpDispatcherFactory:
@@ -76,3 +79,12 @@ services:
         class: EzSystems\PlatformHttpCacheBundle\RepositoryTagPrefix
         # Use config resolver to be able to lazy load reading SA setting "repository" to avoid scope change issues
         arguments: ["@ezpublish.config.resolver", '%ezpublish.repositories%']
+
+    ezplatform.http_cache.proxy_client.varnish.http_dispatcher:
+        class: '%ezplatform.http_cache.proxy_client.http_dispatcher.class%'
+        decorates: fos_http_cache.proxy_client.varnish.http_dispatcher
+        lazy: true
+        factory: ['@EzSystems\PlatformHttpCacheBundle\ProxyClient\HttpDispatcherFactory', 'buildHttpDispatcher']
+        arguments:
+            $servers: '%ezplatform.http_cache.varnish.http.servers%'
+            $baseUrl: '%ezplatform.http_cache.varnish.http.base_url%'
